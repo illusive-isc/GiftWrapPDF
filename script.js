@@ -1,7 +1,6 @@
 const { PDFDocument, StandardFonts, rgb, PDFName, PDFString, PDFArray } = PDFLib;
 
-// TODO: replace with GiftWrapPDF's real site URL once it has one.
-const SITE_URL = 'https://example.com/giftwrappdf';
+const SITE_URL = 'https://illusive-isc.github.io/GiftWrapPDF/';
 const DEFAULT_MESSAGE = 'お誕生日おめでとう！このリンクからプレゼントを受け取ってね。';
 const DEFAULT_PAGE_WIDTH = 841.89; // A4 landscape
 const DEFAULT_PAGE_HEIGHT = 595.28;
@@ -178,7 +177,7 @@ function buildTemplateGrid() {
 // clicked; an entry whose file 404s or fails to decode is silently skipped
 // rather than showing a broken swatch. Requires the page to be served over
 // http(s) — opened via file://, the browser blocks reading these images
-// back out of the PDF canvas (see the SITE_URL TODO area for context).
+// back out of the PDF canvas.
 const customTemplateImages = new Map(); // id -> loaded HTMLImageElement
 
 function loadCustomTemplates() {

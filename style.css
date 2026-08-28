@@ -1,0 +1,384 @@
+:root {
+  --bg: #fdf6f0;
+  --card-bg: #ffffff;
+  --accent: #e8664f;
+  --accent-hover: #d5543e;
+  --text: #33302e;
+  --muted: #837c78;
+  --border: #ece3dd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #fff4ea 0%, var(--bg) 100%);
+  font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  color: var(--text);
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+}
+
+h1 {
+  margin: 0 0 20px;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Wide viewports (landscape desktops/tablets): put the controls and the
+   preview side by side and let the card grow much larger, instead of
+   staying capped at a narrow single-column width. */
+@media (min-width: 860px) {
+  .card {
+    max-width: min(94vw, 1080px);
+    padding: 40px 44px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 48px;
+  }
+
+  .controls {
+    flex: 0 0 300px;
+  }
+
+  .preview-column {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Short viewports (landscape phones/small laptops): trim the vertical
+   padding so the whole card still fits without scrolling. */
+@media (max-height: 700px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 20px 24px;
+  }
+
+  h1 {
+    margin-bottom: 12px;
+  }
+
+  /* Let the preview shrink to fit the available height (its width follows
+     via aspect-ratio) instead of always sizing from the column's width,
+     which is what was pushing the generate button off-screen. */
+  .preview-frame {
+    width: auto;
+    max-height: 38vh;
+    margin: 0 auto;
+  }
+
+  label {
+    margin: 8px 0 4px;
+  }
+
+  button#generate-btn {
+    margin-top: 12px;
+    padding: 10px;
+  }
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 16px 0 6px;
+  color: var(--muted);
+}
+
+button {
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+button:hover {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  background: #d9cfc8;
+  cursor: not-allowed;
+}
+
+#status {
+  min-height: 1.2em;
+  margin-top: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+#status.error {
+  color: #c0392b;
+}
+
+/* Background template picker */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
+}
+
+.template-swatch {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.template-swatch:hover {
+  transform: translateY(-1px);
+}
+
+.template-swatch.active {
+  border-color: var(--accent);
+}
+
+.upload-row {
+  margin-top: 4px;
+}
+
+.upload-label {
+  margin: 16px 0 6px;
+}
+
+.upload-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-controls input[type="file"] {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.link-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  background: none;
+  color: var(--accent-hover);
+}
+
+/* Live preview */
+.preview-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 842 / 595;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.preview-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: background 0.2s ease;
+}
+
+/* The card hugs its own content (height: auto) instead of being a fixed
+   size, so it never leaves a large blank gap for a short message — mirrors
+   the content-driven height computed for the generated PDF. Centered
+   vertically in the frame since its height isn't known in advance. */
+.preview-panel {
+  position: absolute;
+  top: 50%;
+  left: 21.5%; /* fallback before JS computes the exact inset */
+  right: 21.5%; /* fallback before JS computes the exact inset */
+  transform: translateY(-50%);
+  max-height: 92%;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  padding: 8% 7%;
+  overflow: hidden auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.preview-block {
+  margin-bottom: 10px;
+}
+
+.preview-block-url {
+  margin-bottom: 8px;
+}
+
+.url-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.url-row + .url-row {
+  margin-top: 4px;
+}
+
+.url-row .url-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.remove-url-btn {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(131, 124, 120, 0.2);
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.remove-url-btn:hover {
+  background: rgba(232, 102, 79, 0.25);
+  color: var(--accent);
+}
+
+.add-url-btn {
+  width: auto;
+  margin: 6px 0 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  opacity: 0.75;
+  font-size: clamp(0.65rem, 2.6vw, 0.75rem);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.add-url-btn:hover {
+  color: var(--accent);
+  background: none;
+}
+
+.preview-footer {
+  align-self: flex-end;
+  margin-top: 6px;
+  font-size: clamp(0.55rem, 2vw, 0.65rem);
+  color: var(--muted);
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.preview-footer:hover {
+  text-decoration: underline;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.preview-input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: clamp(0.7rem, 3vw, 0.85rem);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.preview-input::placeholder {
+  color: var(--text);
+  opacity: 0.4;
+}
+
+.preview-input:focus {
+  background: rgba(232, 102, 79, 0.08);
+  border-radius: 4px;
+}
+
+.preview-block-message {
+  display: flex;
+  justify-content: center;
+}
+
+.preview-textarea {
+  resize: none;
+  overflow-y: auto;
+  text-align: center;
+  width: auto;
+  min-width: 50%;
+  max-width: 100%;
+}
+
+.preview-link-input {
+  color: #2166d9;
+  text-decoration: underline;
+  text-align: center;
+}

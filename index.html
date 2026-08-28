@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GiftWrapPDF</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="card">
+    <h1>🎁 GiftWrapPDF</h1>
+
+    <div class="layout">
+      <div class="controls">
+        <label>背景テンプレート</label>
+        <div class="template-grid" id="template-grid"></div>
+
+        <div class="upload-row">
+          <label for="custom-bg-input" class="upload-label">または画像をアップロード</label>
+          <div class="upload-controls">
+            <input type="file" id="custom-bg-input" accept="image/png,image/jpeg,image/webp" />
+            <button type="button" id="clear-bg-btn" class="link-btn">テンプレートに戻す</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-column">
+        <label>プレビュー</label>
+        <div class="preview-frame" id="preview-frame">
+          <div class="preview-bg" id="preview-bg"></div>
+          <div class="preview-panel" id="preview-panel">
+            <div class="preview-block preview-block-message">
+              <label for="gift-message" class="sr-only">メッセージ</label>
+              <textarea id="gift-message" class="preview-input preview-textarea" rows="1"></textarea>
+            </div>
+            <div class="preview-block preview-block-url" id="url-block">
+              <div class="url-rows" id="url-rows"></div>
+              <button type="button" id="add-url-btn" class="add-url-btn">+ URLを追加</button>
+            </div>
+            <a id="preview-footer" class="preview-footer" href="#" target="_blank" rel="noopener">Provided by GiftWrapPDF</a>
+          </div>
+        </div>
+
+        <button id="generate-btn">PDFを生成する</button>
+
+        <p id="status"></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <script src="templates/manifest.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

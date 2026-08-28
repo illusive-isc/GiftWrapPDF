@@ -516,10 +516,19 @@ async function createGiftPdf(urls, message, background) {
 
   // QR stamp for the primary URL, right-aligned like the footer wordmark
   // below it — keeps both bottom-right elements sharing the same edge. A
-  // small caption sits above it so it's clear the QR is the gift URL rather
-  // than an unrelated stamp, especially when multiple URLs are listed above.
+  // small caption sits underneath it so it's clear the QR is the gift URL
+  // rather than an unrelated stamp, especially when multiple URLs are
+  // listed above.
   if (showQr) {
     y -= gapToQr;
+
+    const qrDataUrl = buildQrDataUrl(urls[0]);
+    const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
+    const qrX = contentX + contentWidth - qrSize;
+    const qrY = y - qrSize;
+    page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+    addLinkAnnotation(pdfDoc, page, { x: qrX, y: qrY, width: qrSize, height: qrSize }, urls[0]);
+    y = qrY - gapQrCaptionToQr;
 
     const qrCaptionText = 'ギフトURLのQR';
     const captionWidth = cjkFont.widthOfTextAtSize(qrCaptionText, qrCaptionSize);
@@ -530,15 +539,7 @@ async function createGiftPdf(urls, message, background) {
       font: cjkFont,
       color: rgb(0.5, 0.47, 0.45),
     });
-    y -= qrCaptionSize + gapQrCaptionToQr;
-
-    const qrDataUrl = buildQrDataUrl(urls[0]);
-    const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
-    const qrX = contentX + contentWidth - qrSize;
-    const qrY = y - qrSize;
-    page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
-    addLinkAnnotation(pdfDoc, page, { x: qrX, y: qrY, width: qrSize, height: qrSize }, urls[0]);
-    y = qrY;
+    y -= qrCaptionSize;
   }
 
   y -= gapUrlsToFooter;

@@ -27,6 +27,8 @@ const addUrlBtn = document.getElementById('add-url-btn');
 const qrToggle = document.getElementById('qr-toggle');
 const qrBlock = document.getElementById('qr-block');
 const previewQrImg = document.getElementById('preview-qr-img');
+const qrLogoToggle = document.getElementById('qr-logo-toggle');
+const qrLogoRow = document.getElementById('qr-logo-row');
 previewFooter.href = SITE_URL;
 messageInput.placeholder = DEFAULT_MESSAGE;
 
@@ -88,8 +90,12 @@ function getQrTargetUrl() {
 // output a PNG, which is what pdf-lib's embedPng needs — the library's own
 // createDataURL() emits a GIF instead). A quiet-zone margin is added around
 // the modules so the code stays reliably scannable.
-function buildQrDataUrl(text, cellSize = 8, marginModules = 4) {
-  const qr = qrcode(0, 'M');
+//
+// An optional logo is stamped over the center on a white backing. It's kept
+// small (~24% of the module area) and paired with 'H' error correction (the
+// most redundant level) so the code still scans with that much of it covered.
+function buildQrDataUrl(text, { cellSize = 8, marginModules = 4, logo = null } = {}) {
+  const qr = qrcode(0, logo ? 'H' : 'M');
   qr.addData(text);
   qr.make();
   const count = qr.getModuleCount();
@@ -101,22 +107,66 @@ function buildQrDataUrl(text, cellSize = 8, marginModules = 4) {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, size, size);
+  ctx.save();
   ctx.translate(marginModules * cellSize, marginModules * cellSize);
   qr.renderTo2dContext(ctx, cellSize);
+  ctx.restore();
+
+  if (logo) {
+    const moduleAreaSize = count * cellSize;
+    const logoSize = moduleAreaSize * 0.24;
+    const pad = logoSize * 0.18;
+    const cx = size / 2;
+    const cy = size / 2;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(cx - logoSize / 2 - pad, cy - logoSize / 2 - pad, logoSize + pad * 2, logoSize + pad * 2);
+    ctx.drawImage(logo, cx - logoSize / 2, cy - logoSize / 2, logoSize, logoSize);
+  }
 
   return canvas.toDataURL('image/png');
 }
 
-function updateQrPreview() {
+// The BOOTH mark is bundled locally (icons/booth-favicon.png) rather than
+// fetched from booth.pm or a favicon proxy at generation time, so choosing
+// this option doesn't add any external request.
+let boothLogoImagePromise = null;
+function getBoothLogoImage() {
+  if (!boothLogoImagePromise) {
+    boothLogoImagePromise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = 'icons/booth-favicon.png';
+    });
+  }
+  return boothLogoImagePromise;
+}
+
+qrToggle.addEventListener('change', () => {
+  qrLogoToggle.disabled = !qrToggle.checked;
+  qrLogoRow.classList.toggle('disabled', !qrToggle.checked);
+  updateQrPreview();
+});
+qrLogoRow.classList.toggle('disabled', !qrToggle.checked);
+
+// Guards against an older, slower-resolving preview overwriting a newer one
+// when the user edits the URL/logo option again before the first finishes.
+let qrPreviewRequestId = 0;
+
+async function updateQrPreview() {
   const url = getQrTargetUrl();
   const show = qrToggle.checked && url.length > 0;
   qrBlock.classList.toggle('visible', show);
-  if (show) {
-    previewQrImg.src = buildQrDataUrl(url);
-  }
+  if (!show) return;
+
+  const requestId = ++qrPreviewRequestId;
+  const logo = qrLogoToggle.checked ? await getBoothLogoImage().catch(() => null) : null;
+  if (requestId !== qrPreviewRequestId) return;
+
+  previewQrImg.src = buildQrDataUrl(url, { logo });
 }
 
-qrToggle.addEventListener('change', updateQrPreview);
+qrLogoToggle.addEventListener('change', updateQrPreview);
 urlRowsEl.addEventListener('input', updateQrPreview);
 urlRowsEl.addEventListener('click', updateQrPreview);
 
@@ -522,7 +572,8 @@ async function createGiftPdf(urls, message, background) {
   if (showQr) {
     y -= gapToQr;
 
-    const qrDataUrl = buildQrDataUrl(urls[0]);
+    const qrLogo = qrLogoToggle.checked ? await getBoothLogoImage().catch(() => null) : null;
+    const qrDataUrl = buildQrDataUrl(urls[0], { logo: qrLogo });
     const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
     const qrX = contentX + contentWidth - qrSize;
     const qrY = y - qrSize;

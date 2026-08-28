@@ -482,25 +482,29 @@ async function createGiftPdf(urls, message, background) {
   const bottomPadding = 22;
   const gapMessageToUrls = 14;
   const gapUrlsToFooter = 16;
-  const gapToQr = 18;
+  const gapTextToQr = 20;
   const qrSize = 64;
 
   // The QR encodes only the primary (first) gift URL — it's a single stamp
-  // in the corner, not one per URL.
+  // beside the text, not one per URL.
   const showQr = qrToggle.checked && urls.length > 0;
+
+  // The QR sits to the right of the message/URL text instead of stacked
+  // below it, so the text wraps into a narrower column to leave it room.
+  const qrColumnWidth = showQr ? qrSize + gapTextToQr : 0;
+  const textColumnWidth = contentWidth - qrColumnWidth;
 
   // Message body — falls back to the same friendly default shown as the
   // preview's placeholder, so an empty field doesn't produce a blank-feeling card.
   const bodyText = message || DEFAULT_MESSAGE;
-  const lines = wrapText(bodyText, cjkFont, messageFontSize, contentWidth);
+  const lines = wrapText(bodyText, cjkFont, messageFontSize, textColumnWidth);
 
-  const contentHeight =
-    lines.length * lineHeight +
-    gapMessageToUrls +
-    urls.length * lineHeight +
-    (showQr ? gapToQr + qrSize : 0) +
-    gapUrlsToFooter +
-    footerSize;
+  const textBlockHeight = lines.length * lineHeight + gapMessageToUrls + urls.length * lineHeight;
+  // The row is as tall as whichever of the text block / QR is taller, so the
+  // shorter one can be vertically centered against the other.
+  const topRowHeight = showQr ? Math.max(textBlockHeight, qrSize) : textBlockHeight;
+
+  const contentHeight = topRowHeight + gapUrlsToFooter + footerSize;
   const panelHeight = Math.max(140, topPadding + contentHeight + bottomPadding);
 
   const panelX = (width - panelWidth) / 2;
@@ -515,12 +519,16 @@ async function createGiftPdf(urls, message, background) {
     opacity: 0.72,
   });
 
-  let y = panelTopY - topPadding - 10;
+  const topRowTopY = panelTopY - topPadding - 10;
+
+  // Text column starts lower than the row top when the QR is the taller of
+  // the two, so it ends up vertically centered against it.
+  let y = topRowTopY - (topRowHeight - textBlockHeight) / 2;
 
   for (const line of lines) {
     const lineWidth = cjkFont.widthOfTextAtSize(line, messageFontSize);
     page.drawText(line, {
-      x: contentX + (contentWidth - lineWidth) / 2,
+      x: contentX + (textColumnWidth - lineWidth) / 2,
       y,
       size: messageFontSize,
       font: cjkFont,
@@ -536,7 +544,7 @@ async function createGiftPdf(urls, message, background) {
 
   for (const url of urls) {
     const linkTextWidth = font.widthOfTextAtSize(url, linkFontSize);
-    const linkX = contentX + (contentWidth - linkTextWidth) / 2;
+    const linkX = contentX + (textColumnWidth - linkTextWidth) / 2;
 
     page.drawText(url, {
       x: linkX,
@@ -565,31 +573,28 @@ async function createGiftPdf(urls, message, background) {
     y -= lineHeight;
   }
 
-  // QR stamp for the primary URL, right-aligned like the footer wordmark
-  // below it — keeps both bottom-right elements sharing the same edge.
+  // QR stamp for the primary URL, right-aligned within the panel and
+  // vertically centered against the text column beside it.
   if (showQr) {
-    y -= gapToQr;
-
     const qrLogo = qrLogoToggle.checked ? await getBoothLogoImage().catch(() => null) : null;
     const qrDataUrl = buildQrDataUrl(urls[0], { logo: qrLogo });
     const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
     const qrX = contentX + contentWidth - qrSize;
-    const qrY = y - qrSize;
+    const qrTopY = topRowTopY - (topRowHeight - qrSize) / 2;
+    const qrY = qrTopY - qrSize;
     page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
     addLinkAnnotation(pdfDoc, page, { x: qrX, y: qrY, width: qrSize, height: qrSize }, urls[0]);
-    y = qrY;
   }
 
-  y -= gapUrlsToFooter;
-
   // Small, understated wordmark pinned to the bottom-right of the card,
-  // linking back to the GiftWrapPDF site.
+  // linking back to the GiftWrapPDF site — sits below the full row (text + QR).
+  const footerY = topRowTopY - topRowHeight - gapUrlsToFooter;
   const footerText = 'Provided by GiftWrapPDF';
   const footerWidth = font.widthOfTextAtSize(footerText, footerSize);
   const footerX = contentX + contentWidth - footerWidth;
   page.drawText(footerText, {
     x: footerX,
-    y,
+    y: footerY,
     size: footerSize,
     font,
     color: rgb(0.68, 0.65, 0.63),
@@ -597,7 +602,7 @@ async function createGiftPdf(urls, message, background) {
 
   addLinkAnnotation(pdfDoc, page, {
     x: footerX,
-    y: y - 2,
+    y: footerY - 2,
     width: footerWidth,
     height: footerSize + 3,
   }, SITE_URL);

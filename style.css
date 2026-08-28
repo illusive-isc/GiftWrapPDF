@@ -285,6 +285,25 @@ button:disabled {
   margin-bottom: 10px;
 }
 
+/* Message+URL block and the QR sit side by side (QR vertically centered
+   against them) instead of QR being stacked below, which used to leave the
+   card looking bottom-heavy and off-balance. */
+.preview-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.preview-text-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-text-col .preview-block:last-child {
+  margin-bottom: 0;
+}
+
 .preview-block-url {
   margin-bottom: 8px;
 }
@@ -344,9 +363,7 @@ button:disabled {
 
 .preview-block-qr {
   display: none;
-  align-self: flex-end;
-  margin-top: 4px;
-  margin-bottom: 14px;
+  flex: none;
 }
 
 .preview-block-qr.visible {

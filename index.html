@@ -41,16 +41,20 @@
         <div class="preview-frame" id="preview-frame">
           <div class="preview-bg" id="preview-bg"></div>
           <div class="preview-panel" id="preview-panel">
-            <div class="preview-block preview-block-message">
-              <label for="gift-message" class="sr-only">メッセージ</label>
-              <textarea id="gift-message" class="preview-input preview-textarea" rows="1"></textarea>
-            </div>
-            <div class="preview-block preview-block-url" id="url-block">
-              <div class="url-rows" id="url-rows"></div>
-              <button type="button" id="add-url-btn" class="add-url-btn">+ URLを追加</button>
-            </div>
-            <div class="preview-block preview-block-qr" id="qr-block">
-              <img id="preview-qr-img" class="preview-qr-img" alt="ギフトURLのQRコード">
+            <div class="preview-row" id="preview-row">
+              <div class="preview-text-col">
+                <div class="preview-block preview-block-message">
+                  <label for="gift-message" class="sr-only">メッセージ</label>
+                  <textarea id="gift-message" class="preview-input preview-textarea" rows="1"></textarea>
+                </div>
+                <div class="preview-block preview-block-url" id="url-block">
+                  <div class="url-rows" id="url-rows"></div>
+                  <button type="button" id="add-url-btn" class="add-url-btn">+ URLを追加</button>
+                </div>
+              </div>
+              <div class="preview-block preview-block-qr" id="qr-block">
+                <img id="preview-qr-img" class="preview-qr-img" alt="ギフトURLのQRコード">
+              </div>
             </div>
             <a id="preview-footer" class="preview-footer" href="#" target="_blank" rel="noopener">Provided by GiftWrapPDF</a>
           </div>

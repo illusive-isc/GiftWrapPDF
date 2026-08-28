@@ -242,14 +242,6 @@ button:disabled {
   font-size: 0.78rem;
 }
 
-.checkbox-label.disabled {
-  opacity: 0.45;
-}
-
-.checkbox-label input[type="checkbox"]:disabled {
-  cursor: not-allowed;
-}
-
 /* Live preview */
 .preview-frame {
   position: relative;
@@ -352,23 +344,13 @@ button:disabled {
 
 .preview-block-qr {
   display: none;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
   align-self: flex-end;
   margin-top: 4px;
   margin-bottom: 14px;
 }
 
 .preview-block-qr.visible {
-  display: flex;
-}
-
-.qr-caption {
-  font-size: clamp(0.55rem, 2.2vw, 0.68rem);
-  font-weight: 600;
-  color: var(--muted);
-  opacity: 0.85;
+  display: block;
 }
 
 .preview-qr-img {

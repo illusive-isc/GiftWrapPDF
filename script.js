@@ -28,7 +28,6 @@ const qrToggle = document.getElementById('qr-toggle');
 const qrBlock = document.getElementById('qr-block');
 const previewQrImg = document.getElementById('preview-qr-img');
 const qrLogoToggle = document.getElementById('qr-logo-toggle');
-const qrLogoRow = document.getElementById('qr-logo-row');
 previewFooter.href = SITE_URL;
 messageInput.placeholder = DEFAULT_MESSAGE;
 
@@ -142,12 +141,18 @@ function getBoothLogoImage() {
   return boothLogoImagePromise;
 }
 
-qrToggle.addEventListener('change', () => {
-  qrLogoToggle.disabled = !qrToggle.checked;
-  qrLogoRow.classList.toggle('disabled', !qrToggle.checked);
+qrToggle.addEventListener('change', updateQrPreview);
+
+// Checking the logo option only makes sense once the QR itself is showing,
+// so it implicitly turns the QR on too instead of staying disabled until the
+// user checks a separate box first — that two-step requirement read as the
+// checkbox simply not responding.
+qrLogoToggle.addEventListener('change', () => {
+  if (qrLogoToggle.checked) {
+    qrToggle.checked = true;
+  }
   updateQrPreview();
 });
-qrLogoRow.classList.toggle('disabled', !qrToggle.checked);
 
 // Guards against an older, slower-resolving preview overwriting a newer one
 // when the user edits the URL/logo option again before the first finishes.
@@ -166,7 +171,6 @@ async function updateQrPreview() {
   previewQrImg.src = buildQrDataUrl(url, { logo });
 }
 
-qrLogoToggle.addEventListener('change', updateQrPreview);
 urlRowsEl.addEventListener('input', updateQrPreview);
 urlRowsEl.addEventListener('click', updateQrPreview);
 
@@ -479,10 +483,7 @@ async function createGiftPdf(urls, message, background) {
   const gapMessageToUrls = 14;
   const gapUrlsToFooter = 16;
   const gapToQr = 18;
-  const qrCaptionSize = 8;
-  const gapQrCaptionToQr = 6;
   const qrSize = 64;
-  const qrBlockHeight = qrCaptionSize + gapQrCaptionToQr + qrSize;
 
   // The QR encodes only the primary (first) gift URL — it's a single stamp
   // in the corner, not one per URL.
@@ -497,7 +498,7 @@ async function createGiftPdf(urls, message, background) {
     lines.length * lineHeight +
     gapMessageToUrls +
     urls.length * lineHeight +
-    (showQr ? gapToQr + qrBlockHeight : 0) +
+    (showQr ? gapToQr + qrSize : 0) +
     gapUrlsToFooter +
     footerSize;
   const panelHeight = Math.max(140, topPadding + contentHeight + bottomPadding);
@@ -565,10 +566,7 @@ async function createGiftPdf(urls, message, background) {
   }
 
   // QR stamp for the primary URL, right-aligned like the footer wordmark
-  // below it — keeps both bottom-right elements sharing the same edge. A
-  // small caption sits underneath it so it's clear the QR is the gift URL
-  // rather than an unrelated stamp, especially when multiple URLs are
-  // listed above.
+  // below it — keeps both bottom-right elements sharing the same edge.
   if (showQr) {
     y -= gapToQr;
 
@@ -579,18 +577,7 @@ async function createGiftPdf(urls, message, background) {
     const qrY = y - qrSize;
     page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
     addLinkAnnotation(pdfDoc, page, { x: qrX, y: qrY, width: qrSize, height: qrSize }, urls[0]);
-    y = qrY - gapQrCaptionToQr;
-
-    const qrCaptionText = 'ギフトURLのQR';
-    const captionWidth = cjkFont.widthOfTextAtSize(qrCaptionText, qrCaptionSize);
-    page.drawText(qrCaptionText, {
-      x: contentX + contentWidth - captionWidth,
-      y: y - qrCaptionSize,
-      size: qrCaptionSize,
-      font: cjkFont,
-      color: rgb(0.5, 0.47, 0.45),
-    });
-    y -= qrCaptionSize;
+    y = qrY;
   }
 
   y -= gapUrlsToFooter;

@@ -24,6 +24,9 @@ const previewPanel = document.getElementById('preview-panel');
 const previewFooter = document.getElementById('preview-footer');
 const urlRowsEl = document.getElementById('url-rows');
 const addUrlBtn = document.getElementById('add-url-btn');
+const qrToggle = document.getElementById('qr-toggle');
+const qrBlock = document.getElementById('qr-block');
+const previewQrImg = document.getElementById('preview-qr-img');
 previewFooter.href = SITE_URL;
 messageInput.placeholder = DEFAULT_MESSAGE;
 
@@ -72,6 +75,50 @@ function getUrls() {
     .map((el) => el.value.trim())
     .filter((v) => v.length > 0);
 }
+
+// The QR always encodes the first (primary) gift URL, since it's rendered
+// as a single stamp in one corner rather than one per URL.
+function getQrTargetUrl() {
+  const urls = getUrls();
+  return urls.length > 0 ? urls[0] : '';
+}
+
+// Renders a QR code to a PNG data URL entirely client-side (qrcode-generator
+// just encodes bits into a matrix; drawing it to a canvas ourselves keeps the
+// output a PNG, which is what pdf-lib's embedPng needs — the library's own
+// createDataURL() emits a GIF instead). A quiet-zone margin is added around
+// the modules so the code stays reliably scannable.
+function buildQrDataUrl(text, cellSize = 8, marginModules = 4) {
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  const count = qr.getModuleCount();
+  const size = (count + marginModules * 2) * cellSize;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, size, size);
+  ctx.translate(marginModules * cellSize, marginModules * cellSize);
+  qr.renderTo2dContext(ctx, cellSize);
+
+  return canvas.toDataURL('image/png');
+}
+
+function updateQrPreview() {
+  const url = getQrTargetUrl();
+  const show = qrToggle.checked && url.length > 0;
+  qrBlock.classList.toggle('visible', show);
+  if (show) {
+    previewQrImg.src = buildQrDataUrl(url);
+  }
+}
+
+qrToggle.addEventListener('change', updateQrPreview);
+urlRowsEl.addEventListener('input', updateQrPreview);
+urlRowsEl.addEventListener('click', updateQrPreview);
 
 // Small colored dots layered over a template's gradient (rendered as CSS
 // radial-gradients in the preview and as canvas circles in the PDF) so
@@ -126,6 +173,7 @@ let currentBackground = { type: 'template', template: TEMPLATES[0] };
 buildTemplateGrid();
 loadCustomTemplates();
 updateBackgroundPreview();
+updateQrPreview();
 messageInput.addEventListener('input', autosizeMessageWidth);
 window.addEventListener('resize', autosizeMessageWidth);
 
@@ -380,6 +428,12 @@ async function createGiftPdf(urls, message, background) {
   const bottomPadding = 22;
   const gapMessageToUrls = 14;
   const gapUrlsToFooter = 12;
+  const gapToQr = 14;
+  const qrSize = 64;
+
+  // The QR encodes only the primary (first) gift URL — it's a single stamp
+  // in the corner, not one per URL.
+  const showQr = qrToggle.checked && urls.length > 0;
 
   // Message body — falls back to the same friendly default shown as the
   // preview's placeholder, so an empty field doesn't produce a blank-feeling card.
@@ -390,6 +444,7 @@ async function createGiftPdf(urls, message, background) {
     lines.length * lineHeight +
     gapMessageToUrls +
     urls.length * lineHeight +
+    (showQr ? gapToQr + qrSize : 0) +
     gapUrlsToFooter +
     footerSize;
   const panelHeight = Math.max(140, topPadding + contentHeight + bottomPadding);
@@ -454,6 +509,19 @@ async function createGiftPdf(urls, message, background) {
     }, url);
 
     y -= lineHeight;
+  }
+
+  // QR stamp for the primary URL, right-aligned like the footer wordmark
+  // below it — keeps both bottom-right elements sharing the same edge.
+  if (showQr) {
+    y -= gapToQr;
+    const qrDataUrl = buildQrDataUrl(urls[0]);
+    const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
+    const qrX = contentX + contentWidth - qrSize;
+    const qrY = y - qrSize;
+    page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+    addLinkAnnotation(pdfDoc, page, { x: qrX, y: qrY, width: qrSize, height: qrSize }, urls[0]);
+    y = qrY;
   }
 
   y -= gapUrlsToFooter;

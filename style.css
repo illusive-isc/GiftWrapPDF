@@ -214,6 +214,28 @@ button:disabled {
   color: var(--accent-hover);
 }
 
+.option-row {
+  margin-top: 14px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* Live preview */
 .preview-frame {
   position: relative;
@@ -312,6 +334,23 @@ button:disabled {
 .add-url-btn:hover {
   color: var(--accent);
   background: none;
+}
+
+.preview-block-qr {
+  display: none;
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+.preview-block-qr.visible {
+  display: block;
+}
+
+.preview-qr-img {
+  display: block;
+  width: clamp(40px, 8vw, 90px);
+  aspect-ratio: 1 / 1;
+  image-rendering: pixelated;
 }
 
 .preview-footer {

@@ -23,6 +23,13 @@
             <button type="button" id="clear-bg-btn" class="link-btn">テンプレートに戻す</button>
           </div>
         </div>
+
+        <div class="option-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="qr-toggle">
+            <span>QRコードを追加（右下に配置）</span>
+          </label>
+        </div>
       </div>
 
       <div class="preview-column">
@@ -38,6 +45,9 @@
               <div class="url-rows" id="url-rows"></div>
               <button type="button" id="add-url-btn" class="add-url-btn">+ URLを追加</button>
             </div>
+            <div class="preview-block preview-block-qr" id="qr-block">
+              <img id="preview-qr-img" class="preview-qr-img" alt="QRコード">
+            </div>
             <a id="preview-footer" class="preview-footer" href="#" target="_blank" rel="noopener">Provided by GiftWrapPDF</a>
           </div>
         </div>
@@ -51,6 +61,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
   <script src="templates/manifest.js"></script>
   <script src="script.js"></script>
 </body>

@@ -427,9 +427,12 @@ async function createGiftPdf(urls, message, background) {
   const topPadding = 30;
   const bottomPadding = 22;
   const gapMessageToUrls = 14;
-  const gapUrlsToFooter = 12;
-  const gapToQr = 14;
+  const gapUrlsToFooter = 16;
+  const gapToQr = 18;
+  const qrCaptionSize = 8;
+  const gapQrCaptionToQr = 6;
   const qrSize = 64;
+  const qrBlockHeight = qrCaptionSize + gapQrCaptionToQr + qrSize;
 
   // The QR encodes only the primary (first) gift URL — it's a single stamp
   // in the corner, not one per URL.
@@ -444,7 +447,7 @@ async function createGiftPdf(urls, message, background) {
     lines.length * lineHeight +
     gapMessageToUrls +
     urls.length * lineHeight +
-    (showQr ? gapToQr + qrSize : 0) +
+    (showQr ? gapToQr + qrBlockHeight : 0) +
     gapUrlsToFooter +
     footerSize;
   const panelHeight = Math.max(140, topPadding + contentHeight + bottomPadding);
@@ -512,9 +515,23 @@ async function createGiftPdf(urls, message, background) {
   }
 
   // QR stamp for the primary URL, right-aligned like the footer wordmark
-  // below it — keeps both bottom-right elements sharing the same edge.
+  // below it — keeps both bottom-right elements sharing the same edge. A
+  // small caption sits above it so it's clear the QR is the gift URL rather
+  // than an unrelated stamp, especially when multiple URLs are listed above.
   if (showQr) {
     y -= gapToQr;
+
+    const qrCaptionText = 'ギフトURLのQR';
+    const captionWidth = cjkFont.widthOfTextAtSize(qrCaptionText, qrCaptionSize);
+    page.drawText(qrCaptionText, {
+      x: contentX + contentWidth - captionWidth,
+      y: y - qrCaptionSize,
+      size: qrCaptionSize,
+      font: cjkFont,
+      color: rgb(0.5, 0.47, 0.45),
+    });
+    y -= qrCaptionSize + gapQrCaptionToQr;
+
     const qrDataUrl = buildQrDataUrl(urls[0]);
     const qrImage = await pdfDoc.embedPng(dataUrlToBytes(qrDataUrl));
     const qrX = contentX + contentWidth - qrSize;

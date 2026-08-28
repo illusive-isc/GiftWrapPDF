@@ -9,10 +9,11 @@
 
 - 🎨 背景テンプレートから選択、または好きな画像をアップロードして背景に設定
 - ✉️ メッセージとギフトURL（最大3件）を入力してカードを作成
-- 🔗 生成されるPDFのURL・フッターはクリック可能なリンクとして埋め込み
+- 📱 チェックを入れると、1件目のギフトURLのQRコードを右下に追加
+- 🔗 生成されるPDFのURL・QR・フッターはクリック可能なリンクとして埋め込み
 - 🈶 日本語メッセージに対応（CJKフォントを自動で埋め込み）
 - 🖥️ 完全にブラウザ内で完結 — サーバーへのアップロードや送信は一切なし
-  （PDF生成ライブラリとフォントのみCDNから読み込みます）
+  （PDF生成ライブラリ・フォント・QR生成ライブラリのみCDNから読み込みます）
 
 ## 使い方
 
@@ -41,6 +42,7 @@ window.CUSTOM_TEMPLATES = [
 - Vanilla JS / HTML / CSS（ビルド不要）
 - [pdf-lib](https://github.com/Hopding/pdf-lib) — PDF生成
 - [@pdf-lib/fontkit](https://github.com/Hopding/fontkit) — カスタムフォント埋め込み
+- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) — QRコード生成
 - GitHub Actions で `main` への push 時に GitHub Pages へ自動デプロイ
 
 ## ライセンス
